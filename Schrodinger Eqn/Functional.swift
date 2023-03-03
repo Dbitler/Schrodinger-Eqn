@@ -9,4 +9,6 @@ import SwiftUI
 
 class Functional: ObservableObject {
     @Published var functionalData = [(energyPoint: Double, FunctionalPoint: Double)]()
+    
+    
 }

@@ -35,7 +35,7 @@ struct ContentView: View {
         
         calculator.plotDataModel = self.plotData.plotArray[selector]
     }
-    
+ 
     @State var psi_0 = 0.0
     @State var psi_n = 0.0
     @State var psi_nplus1 = 0.0
@@ -50,9 +50,8 @@ struct ContentView: View {
     @State var length = 10.0
     @State var potential = 0.0
     @State var psi_doubleprime_n = 0.0
-    @State var m = 0.0
-    @State var h_bar = 0.0
-    @State var C = 0.0
+    @State var m_e = 510998.950 //MeV/c^2 (0.51 MeV)v FIX THESEE UNITS   eV* s^2/(eV^2 * s^2 * m^2) = 1/eV * m^2
+    @State var h_barc = 0.1973269804 //eV⋅μm
     @State var E0string = "0.0" //E0 is an input
     @State var E_maxstring = "30.0" //E would be an input.
     @State var E0 = 0.0
@@ -80,12 +79,15 @@ struct ContentView: View {
                 Button(action: self.schrodingersoln) {
                     Text("Calculate")
                 }
+                Button(action: self.graph) {
+                    Text("Plot")
+                }
             }
             VStack{
                 Chart($plotData.plotArray[selector].plotData.wrappedValue) {
                     LineMark(
-                        x: .value("n-value", $0.xVal),
-                        y: .value("error (logscale)", $0.yVal)
+                        x: .value("Energy", $0.xVal),
+                        y: .value("Functional", $0.yVal)
                         
                     )
                     .foregroundStyle($plotData.plotArray[selector].changingPlotParameters.lineColor.wrappedValue)
@@ -112,11 +114,14 @@ struct ContentView: View {
     }
     /// function utilizes the schrodinger equation, Looping over E, looping over x within that loop, 
     ///
-    ///
+    ///it finds the value of phi double prime first, utilizing the given potential and that loop's E, and then uses that with the following equations to find the next phi, Phi n+1. Then it redoes the steps
     ///
     ///
     ///
     func schrodingersoln(){
+        
+        
+        
         /* at the boundaries of the bounding box, psi_0 = 0, and psi_L = 0.
          */
         delta_x = Double(delta_xstring)!
@@ -124,30 +129,45 @@ struct ContentView: View {
         E_max = Double(E_maxstring)!
         psi_prime_n = 5
         E_step = Double(E_stepstring)!
+
+        let C = -((2.0 * m_e) / pow(h_barc, 2.0)) * pow(1E-4,2) // h = eV*s ; m_e = eV/c^2 = eV * s^2/ m^2 => h^2/m = eV*m => eV* Angstrom = eV* m * 1E-10
+        //h-bar * c = 0.1973269804... eV⋅μm
+        print(C)
+        print((2/C))
         
-        h_bar = 6.5E-16 //eV*s
-        m = 510000 //eV/c^2 (0.51 MeV/c^2)v FIX THESEE UNITS   eV* s^2/(eV^2 * s^2 * m^2) = 1/eV * m^2
-        C = -(2 * m) / pow(h_bar, 2)
+        mypotentialinstance.PotentialData = []
+        mywavefxnvariableinstance.wavefxnData = []
+        mywavefxnvariableinstance.wavefxnprimeData = []
+        mywavefxnvariableinstance.wavefxndoubleprimeData = []
+        myfunctionalinstance.functionalData = []
+        
         mypotentialinstance.particleinaboxcalc(xmin: 0, xmax: length, delta_x: self.delta_x)
 //        print(mypotentialinstance.PotentialData)
+        
+        
         for energy in stride(from: E0, to: E_max, by: E_step) {
             mywavefxnvariableinstance.wavefxnData = []
             mywavefxnvariableinstance.wavefxnprimeData = []
-            for n in stride(from: 0, to: mypotentialinstance.PotentialData.count, by: 1){
+            
+            
+            mywavefxnvariableinstance.wavefxnData.append((xPoint: x_min, PsiPoint:  0.0))
+            mywavefxnvariableinstance.wavefxnprimeData.append((xPoint: x_min, PsiprimePoint: 7.0)) //Psiprimepoint is arbitrarily chosen number, could be anything
+            
+            psi_doubleprime_n = C * mywavefxnvariableinstance.wavefxnData[0].PsiPoint * ( energy - mypotentialinstance.PotentialData[0].PotentialPoint)
+            
+            mywavefxnvariableinstance.wavefxndoubleprimeData.append((xPoint: x_min, PsidoubleprimePoint: psi_doubleprime_n))
+            
+            for n in stride(from: 1, to: mypotentialinstance.PotentialData.count, by: 1){
                 let x = Double(n) * delta_x
-                if n == 0 {
-                    mywavefxnvariableinstance.wavefxnprimeData.append((xPoint: x, PsiprimePoint: 7.0))
-                    mywavefxnvariableinstance.wavefxnData.append((xPoint: x, PsiPoint:  0.0))
-                }
-                else{
-                    psi_doubleprime_n = C * psi_n * ( energy - mypotentialinstance.PotentialData[n-1].PotentialPoint)
+               
+                    psi_doubleprime_n = C * mywavefxnvariableinstance.wavefxnData[n-1].PsiPoint * ( energy - mypotentialinstance.PotentialData[n-1].PotentialPoint)
                     psi_prime_nplus1 = mywavefxnvariableinstance.wavefxnprimeData[n-1].PsiprimePoint + (psi_doubleprime_n * delta_x)
-                    psi_nplus1 = mywavefxnvariableinstance.wavefxnData[n-1].PsiPoint + (psi_prime_n * delta_x)
+                    psi_nplus1 = mywavefxnvariableinstance.wavefxnData[n-1].PsiPoint + (mywavefxnvariableinstance.wavefxnprimeData[n-1].PsiprimePoint * delta_x)
                     
                     mywavefxnvariableinstance.wavefxnprimeData.append((xPoint: x, PsiprimePoint: psi_prime_nplus1))
                     mywavefxnvariableinstance.wavefxnData.append((xPoint: x, PsiPoint:  psi_nplus1))
                     
-                }
+                    mywavefxnvariableinstance.wavefxndoubleprimeData.append((xPoint: x, PsidoubleprimePoint: psi_doubleprime_n))
 
                 
                 
@@ -161,6 +181,19 @@ struct ContentView: View {
             print(energy)
         }
         print(myfunctionalinstance.functionalData)
+    }
+    
+    func graph(){
+        schrodingersoln()
+        self.plotData.plotArray[0].plotData = []
+        calculator.plotDataModel = self.plotData.plotArray[0]
+        
+        for m in 0...myfunctionalinstance.functionalData.count-1{
+            calculator.appendDataToPlot(plotData: [(x: myfunctionalinstance.functionalData[m].energyPoint, y: myfunctionalinstance.functionalData[m].FunctionalPoint)])
+        }
+        
+        setObjectWillChange(theObject: self.plotData)
+        
     }
     
 }

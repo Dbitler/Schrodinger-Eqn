@@ -10,5 +10,6 @@ import SwiftUI
 class Wavefunctions: ObservableObject {
     @Published var wavefxnData = [(xPoint: Double, PsiPoint: Double)]()
     @Published var wavefxnprimeData = [(xPoint: Double, PsiprimePoint: Double)]()
+    @Published var wavefxndoubleprimeData = [(xPoint: Double, PsidoubleprimePoint: Double)]()
     
 }

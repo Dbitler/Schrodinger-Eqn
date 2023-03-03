@@ -9,6 +9,7 @@ import SwiftUI
 
 class HoldVariable: ObservableObject {
     
+    @ObservedObject private var calculator = CalculatePlotData()
     @Published var insideData = [(xPoint: Double, yPoint: Double)]()
     @Published var outsideData = [(xPoint: Double, yPoint: Double)]()
     
