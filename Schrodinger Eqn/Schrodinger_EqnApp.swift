@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct Schrodinger_EqnApp: App {
+    @StateObject var plotData = PlotClass()
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(plotData)
+                .tabItem {
+                    Text("Plot")
+                }
         }
     }
 }

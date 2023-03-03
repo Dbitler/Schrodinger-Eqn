@@ -41,10 +41,12 @@ struct ContentView: View {
     @State var psi_nplus1 = 0.0
     @State var psi_prime_n = 0.0
     @State var psi_prime_nplus1 = 0.0
-    @State var delta_xstring = "" //The size of delta_x determines the granularity of the Euler's solution, how accurate it is.
+    @State var delta_xstring = "0.05" //The size of delta_x determines the granularity of the Euler's solution, how accurate it is.
     @State var delta_x = 0.005
     @State var x_max = 10.0
     @State var x_min = 0.0
+    @State var x_maxstring = "10.0"
+    @State var x_minstring = "0.0"
     @State var length = 10.0
     @State var potential = 0.0
     @State var psi_doubleprime_n = 0.0
@@ -55,28 +57,65 @@ struct ContentView: View {
     @State var E_maxstring = "30.0" //E would be an input.
     @State var E0 = 0.0
     @State var E_max = 30.0
-    @State var E_step = 0.005 //also an input.
+    @State var E_step = 0.005
+    @State var E_stepstring = "0.05" //also an input.
     
     var body: some View {
         HStack{
             VStack {
-                Text("Enter x-limits")
+                Text("Enter length parameters")
                 HStack {
                     TextField("x-step", text: $delta_xstring)
-                    //TextField("x-max", text: $x_min)
-                    //TextField("x-min", text: $myholdvariableinstance.xmaxstring)
+                    TextField("x-max", text: $x_minstring)
+                    TextField("x-min", text: $x_maxstring)
                 }
+                Text("Enter energy Parameters")
+                HStack {
+                    TextField("E-step", text: $E_stepstring)
+                    TextField("E-min", text: $E0string)
+                    TextField("E-max", text: $E_maxstring)
+                }
+                
+                
                 Button(action: self.schrodingersoln) {
                     Text("Calculate")
                 }
             }
+            VStack{
+                Chart($plotData.plotArray[selector].plotData.wrappedValue) {
+                    LineMark(
+                        x: .value("n-value", $0.xVal),
+                        y: .value("error (logscale)", $0.yVal)
+                        
+                    )
+                    .foregroundStyle($plotData.plotArray[selector].changingPlotParameters.lineColor.wrappedValue)
+                    PointMark(x: .value("Position", $0.xVal), y: .value("Height", $0.yVal))
+                    
+                        .foregroundStyle($plotData.plotArray[selector].changingPlotParameters.lineColor.wrappedValue)
+                    
+                    
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading)
+                }
+                .padding()
+                Text($plotData.plotArray[selector].changingPlotParameters.xLabel.wrappedValue)
+                    .foregroundColor(.red)
+             }
+            }
             
         }
-    }
+    
 
     func potentials(){
         
     }
+    /// function utilizes the schrodinger equation, Looping over E, looping over x within that loop, 
+    ///
+    ///
+    ///
+    ///
+    ///
     func schrodingersoln(){
         /* at the boundaries of the bounding box, psi_0 = 0, and psi_L = 0.
          */
@@ -84,9 +123,10 @@ struct ContentView: View {
          E0 = Double(E0string)!
         E_max = Double(E_maxstring)!
         psi_prime_n = 5
+        E_step = Double(E_stepstring)!
         
         h_bar = 6.5E-16 //eV*s
-        m = 510000 //eV/c^2 (0.51 MeV/c^2)v FIX THESEE UNITS
+        m = 510000 //eV/c^2 (0.51 MeV/c^2)v FIX THESEE UNITS   eV* s^2/(eV^2 * s^2 * m^2) = 1/eV * m^2
         C = -(2 * m) / pow(h_bar, 2)
         mypotentialinstance.particleinaboxcalc(xmin: 0, xmax: length, delta_x: self.delta_x)
 //        print(mypotentialinstance.PotentialData)
